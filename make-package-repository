@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+shopt -s extglob
 
 
 #
@@ -10,6 +11,17 @@ function pushd {
 }
 function popd {
     command popd "$@" > /dev/null
+}
+
+
+#
+# Normalize project name
+#
+# Arguments:
+#   $1     - Raw project name
+#
+function normalize {
+    echo $1 | sed -E -e 's/[-_.]+/-/g' | tr '[:upper:]' '[:lower:]'
 }
 
 
@@ -33,16 +45,16 @@ function calculate_sha256 {
 function collect_wheel {
     local whlpath=$1
     local whlname=$(basename $whlpath)
-    local package=$(echo $whlname | cut -d'-' -f1)
-    local zippath=$(echo $whlname | cut -d'-' -f1,2).dist-info/METADATA
+    local meta=$(unzip -Z -1 $whlpath | grep .dist-info/METADATA$)
+    local proj=$(normalize ${meta%-+([0-9]|.).dist-info/METADATA})
 
     echo "  $whlname"
 
-    mkdir -p $package
-    pushd $package
+    mkdir -p $proj
+    pushd $proj
 
     cp $whlpath $whlname
-    unzip -p $whlpath $zippath > $whlname.metadata
+    unzip -p $whlpath $meta > $whlname.metadata
 
     popd
 }
@@ -52,7 +64,7 @@ function collect_wheel {
 # Write the root index page
 #
 # Arguments:
-#   $1..n  - Package names to include in index
+#   $1..n  - Project names to include in index
 #
 function write_root_index {
     echo "<!DOCTYPE html>"
@@ -62,8 +74,8 @@ function write_root_index {
     echo "  </head>"
     echo "  <body>"
 
-    for pkg in "$@"; do
-        echo "    <a href=\"./$pkg/\">$pkg</a><br />"
+    for project in "$@"; do
+        echo "    <a href=\"./$project/\">$project</a><br />"
     done
 
     echo "  </body>"
@@ -72,13 +84,13 @@ function write_root_index {
 
 
 #
-# Write index page for a particular package
+# Write index page for a particular project
 #
 # Arguments:
-#   $1     - Package name
-#   $2..n  - Wheels available for package
+#   $1     - Project name
+#   $2..n  - Wheels available for project
 #
-function write_package_index {
+function write_project_index {
     local name=$1
     shift
 
@@ -128,13 +140,13 @@ function main {
     done
 
     echo "Writing root index ..."
-    local pkgs=(*)
-    write_root_index ${pkgs[@]} > index.html
+    local projects=(*)
+    write_root_index ${projects[@]} > index.html
 
-    for pkg in ${pkgs[@]}; do
-        echo "Writing package index [$pkg] ..."
-        pushd $pkg
-        write_package_index $pkg *.whl > index.html
+    for project in ${projects[@]}; do
+        echo "Writing project index [$project] ..."
+        pushd $project
+        write_project_index $project *.whl > index.html
         popd
     done
 }
