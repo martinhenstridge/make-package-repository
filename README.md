@@ -15,15 +15,15 @@ Note: no attempt is made to [normalize](https://peps.python.org/pep-0503/#normal
 Run the script as follows:
 
 ```bash
-./make-package-repository <WHLDIR> <OUTDIR>
+./make-package-repository WHLDIR OUTDIR
 ```
 
-where `<WHLDIR>` is a directory containing `.whl` files and `<OUTDIR>` is where the package repository will be created (under the `/simple` subdirectory, matching the convention set by PyPI).
+where `WHLDIR` is a directory containing `.whl` files and `OUTDIR` is where the package repository will be created (under the `/simple` subdirectory, matching the convention set by PyPI).
 
 Next, spawn an HTTP server at the root of the package repository. For example:
 
 ```bash
-python3 -m http.server -d <OUTDIR>
+python3 -m http.server -d OUTDIR
 ```
 
 The package repository is now ready for use, for example as an extra index to `pip`:

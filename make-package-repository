@@ -142,6 +142,6 @@ function main {
 
 #
 # Usage:
-#   $ ./make-package-repository <WHLDIR> <OUTDIR>
+#   $ ./make-package-repository WHLDIR OUTDIR
 #
 main "$@"
