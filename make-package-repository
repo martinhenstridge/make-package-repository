@@ -1,0 +1,147 @@
+#!/bin/bash
+set -e
+
+
+#
+# Quiet versions of pushd/popd builtins
+#
+function pushd {
+    command pushd "$@" > /dev/null
+}
+function popd {
+    command popd "$@" > /dev/null
+}
+
+
+#
+# Calculate the sha256 checksum of a file
+#
+# Arguments:
+#   $1     - Path to file
+#
+function calculate_sha256 {
+    sha256sum -b $1 | cut -d' ' -f1
+}
+
+
+#
+# Collect a wheel into the output directory
+#
+# Arguments:
+#   $1     - Path to wheel file to be collected
+#
+function collect_wheel {
+    local whlpath=$1
+    local whlname=$(basename $whlpath)
+    local package=$(echo $whlname | cut -d'-' -f1)
+    local zippath=$(echo $whlname | cut -d'-' -f1,2).dist-info/METADATA
+
+    echo "  $whlname"
+
+    mkdir -p $package
+    pushd $package
+
+    cp $whlpath $whlname
+    unzip -p $whlpath $zippath > $whlname.metadata
+
+    popd
+}
+
+
+#
+# Write the root index page
+#
+# Arguments:
+#   $1..n  - Package names to include in index
+#
+function write_root_index {
+    echo "<!DOCTYPE html>"
+    echo "<html>"
+    echo "  <head>"
+    echo "    <meta name=\"pypi:repository-version\" content=\"1.0\">"
+    echo "  </head>"
+    echo "  <body>"
+
+    for pkg in "$@"; do
+        echo "    <a href=\"./$pkg/\">$pkg</a><br />"
+    done
+
+    echo "  </body>"
+    echo "</html>"
+}
+
+
+#
+# Write index page for a particular package
+#
+# Arguments:
+#   $1     - Package name
+#   $2..n  - Wheels available for package
+#
+function write_package_index {
+    local name=$1
+    shift
+
+    echo "<!DOCTYPE html>"
+    echo "<html>"
+    echo "  <head>"
+    echo "    <meta name=\"pypi:repository-version\" content=\"1.0\">"
+    echo "    <title>Links for $name</title>"
+    echo "  </head>"
+    echo "  <body>"
+    echo "    <h1>Links for $name</h1>"
+
+    for whl in "$@"; do
+        whlhash=$(calculate_sha256 $whl)
+        metahash=$(calculate_sha256 $whl.metadata)
+
+        echo -n "    <a href=\"$whl#sha256=$whlhash\""
+        echo " data-dist-info-metadata=\"sha256=$metahash\">$whl</a><br />"
+    done
+
+    echo "    </body>"
+    echo "</html>"
+}
+
+
+#
+# Make package repository
+#
+# Arguments:
+#  $1      - Directory containing wheels
+#  $2      - Directory to write output into
+#
+function main {
+    local whldir=$(realpath $1)
+    local outdir=$(realpath $2)/simple
+
+    if [ -e $outdir ]; then
+        echo "Output directory exists: $outdir"
+        exit 1
+    fi
+    mkdir -p $outdir
+    cd $outdir
+
+    echo "Collecting wheels ..."
+    for whl in $(find $whldir -type f -name "*.whl"); do
+        collect_wheel $whl
+    done
+
+    echo "Writing root index ..."
+    local pkgs=(*)
+    write_root_index ${pkgs[@]} > index.html
+
+    for pkg in ${pkgs[@]}; do
+        echo "Writing package index [$pkg] ..."
+        pushd $pkg
+        write_package_index $pkg *.whl > index.html
+        popd
+    done
+}
+
+
+#
+# Usage:
+#   $ ./make-package-repository <WHLDIR> <OUTDIR>
+#
+main "$@"
