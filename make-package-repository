@@ -104,8 +104,8 @@ function write_project_index {
     echo "    <h1>Links for $name</h1>"
 
     for whl in "$@"; do
-        whlhash=$(calculate_sha256 $whl)
-        metahash=$(calculate_sha256 $whl.metadata)
+        local whlhash=$(calculate_sha256 $whl)
+        local metahash=$(calculate_sha256 $whl.metadata)
 
         echo -n "    <a href=\"$whl#sha256=$whlhash\""
         echo " data-dist-info-metadata=\"sha256=$metahash\">$whl</a><br />"
