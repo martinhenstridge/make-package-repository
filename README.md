@@ -13,7 +13,7 @@ The generated package repository is compatible with the following:
 Run the script as follows:
 
 ```bash
-./make-package-repository WHLDIR OUTDIR
+./pkgrepo.sh WHLDIR OUTDIR
 ```
 
 where `WHLDIR` is a directory containing `.whl` files and `OUTDIR` is where the package repository will be created (under the `/simple` subdirectory, matching the convention set by PyPI).

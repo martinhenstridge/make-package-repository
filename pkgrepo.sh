@@ -48,8 +48,6 @@ function collect_wheel {
     local meta=$(unzip -Z -1 $whlpath | grep .dist-info/METADATA$)
     local proj=$(normalize ${meta%-+([0-9]|.).dist-info/METADATA})
 
-    echo "  $whlname"
-
     mkdir -p $proj
     pushd $proj
 
@@ -134,21 +132,24 @@ function main {
     mkdir -p $outdir
     cd $outdir
 
-    echo "Collecting wheels ..."
+    echo "Collecting wheels"
     for whl in $(find $whldir -type f -name "*.whl"); do
+        echo "  $whlname"
         collect_wheel $whl
     done
 
-    echo "Writing root index ..."
+    echo "Writing root index"
     local projects=(*)
     write_root_index ${projects[@]} > index.html
 
     for project in ${projects[@]}; do
-        echo "Writing project index [$project] ..."
+        echo "Writing project index [$project]"
         pushd $project
         write_project_index $project *.whl > index.html
         popd
     done
+
+    echo "Done."
 }
 
 
