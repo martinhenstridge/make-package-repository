@@ -1,6 +1,6 @@
 # make-package-repository
 
-A bash script to produce a static Python package repository from a directory containing [wheel](https://peps.python.org/pep-0427/) files. Inspired by [`simple503`](https://github.com/repo-helper/simple503).
+Produce a static Python package repository from a directory containing [wheel](https://peps.python.org/pep-0427/) files. Inspired by [`simple503`](https://github.com/repo-helper/simple503).
 
 The generated package repository is compatible with the following:
 
@@ -10,10 +10,14 @@ The generated package repository is compatible with the following:
 
 ## Usage
 
-Run the script as follows:
+There are two equivalent implementations, run either the bash script or the python3 script as follows:
 
 ```bash
+# Using bash
 ./pkgrepo.sh WHLDIR OUTDIR
+
+# Using python
+./pkgrepo.py WHLDIR OUTDIR
 ```
 
 where `WHLDIR` is a directory containing `.whl` files and `OUTDIR` is where the package repository will be created (under the `/simple` subdirectory, matching the convention set by PyPI).
